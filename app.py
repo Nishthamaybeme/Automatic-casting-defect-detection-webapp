@@ -1,9 +1,21 @@
 import torch
 import streamlit as st
+import requests
 from PIL import Image
+import os
 
-# Load the model locally
-model_path = "E:\defect detection\crime_game_model.pth"  # Adjust the path if needed
+# Download model from Google Drive (only if it doesn't exist locally)
+model_url = "https://drive.google.com/file/d/1Nmi4h-cIXeYbz0Dcf_1oI1Vzm8OObFtG/view?usp=sharing"
+model_path = "crime_game_model.pth"
+
+if not os.path.exists(model_path):
+    st.info("Downloading model... This might take a while.")
+    response = requests.get(model_url)
+    with open(model_path, "wb") as f:
+        f.write(response.content)
+    st.success("Model downloaded!")
+
+# Load the model
 model = torch.load(model_path, map_location=torch.device("cpu"))
 model.eval()
 
