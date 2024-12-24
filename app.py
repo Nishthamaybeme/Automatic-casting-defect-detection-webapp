@@ -1,34 +1,20 @@
+import gdown
 import torch
 import streamlit as st
 from PIL import Image
-import requests
+from torchvision import transforms
 import os
 
-# Function to create a direct download link for Google Drive
-def download_file_from_google_drive(url, destination):
-    file_id = url.split("/d/")[1].split("/view")[0]
-    download_url = f"https://drive.google.com/uc?export=download&id={file_id}"
-    response = requests.get(download_url, stream=True)
-    if response.status_code == 200:
-        with open(destination, "wb") as f:
-            f.write(response.content)
-    else:
-        st.error("Failed to download the model. Please check the link.")
+# Correct Google Drive file ID for gdown
+model_url = 'https://drive.google.com/uc?id=1Nmi4h-cIXeYbz0Dcf_1oI1Vzm8OObFtG'
 
-# Model file path
-model_url = "https://drive.google.com/file/d/1Nmi4h-cIXeYbz0Dcf_1oI1Vzm8OObFtG/view?usp=sharing"
-model_path = "crime_game_model.pth"
+# Download the model from Google Drive
+gdown.download(model_url, 'crime_game_model.pth', quiet=False)
 
-# Download model if not already downloaded
-if not os.path.exists(model_path):
-    st.info("Downloading model... This might take a while.")
-    download_file_from_google_drive(model_url, model_path)
-    st.success("Model downloaded!")
-
-# Load the model
+# Load the model (ensure the correct path and extension are used)
 try:
-    model = torch.load(model_path, map_location=torch.device("cpu"))
-    model.eval()
+    model = torch.load('crime_game_model.pth', map_location=torch.device("cpu"))
+    model.eval()  # Set the model to evaluation mode
 except Exception as e:
     st.error(f"Failed to load the model: {e}")
 
@@ -45,11 +31,12 @@ if uploaded_file is not None:
     st.image(image, caption="Uploaded Image", use_column_width=True)
 
     # Preprocess the image for the model
-    transform = torch.nn.Sequential(
-        torch.nn.Resize((224, 224)),  # Adjust based on your model's input size
-        torch.nn.ToTensor()
-    )
-    input_image = transform(image).unsqueeze(0)
+    transform = transforms.Compose([
+        transforms.Resize((224, 224)),  # Adjust based on your model's input size
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalization values for ImageNet-like models
+    ])
+    input_image = transform(image).unsqueeze(0)  # Add batch dimension
 
     # Run the prediction
     with torch.no_grad():
