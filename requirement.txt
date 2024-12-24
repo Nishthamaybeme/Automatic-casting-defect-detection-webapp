@@ -1,8 +1,5 @@
 streamlit
-tensorflow
-numpy
-pillow
-gdown
 torch
 torchvision
-
+Pillow
+requests
